@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flap Royale - Lobby</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="lobby-container" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#1a1a2e;color:#fff;font-family:sans-serif;">
+        <h1>🐤 LOBBY</h1>
+        <h2 id="roomCodeDisplay" style="font-size:2rem;letter-spacing:8px;">----</h2>
+        <div id="playerList" style="margin:20px;font-size:1.2rem;"></div>
+        <p id="lobbyStatus">Waiting for players...</p>
+        <button id="startBtn" style="display:none;padding:15px 40px;font-size:1.2rem;background:#ffdd00;border:none;border-radius:10px;cursor:pointer;">👑 START GAME</button>
+        <button id="leaveBtn" style="margin-top:10px;background:transparent;color:#fff;border:1px solid #fff;padding:10px 20px;border-radius:10px;cursor:pointer;">Leave</button>
+    </div>
+    <script src="firebase.js"></script>
+    <script>
+        const roomCode = sessionStorage.getItem('roomCode');
+        const isHost = sessionStorage.getItem('isHost') === 'true';
+        const playerName = sessionStorage.getItem('playerName');
+        const playerColor = sessionStorage.getItem('birdColor');
+        const playerId = 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2,4);
+        sessionStorage.setItem('playerId', playerId);
+
+        document.getElementById('roomCodeDisplay').textContent = roomCode;
+
+        const refs = {
+            room: getRoomRef(roomCode),
+            players: getPlayersRef(roomCode)
+        };
+
+        refs.players.child(playerId).set({
+            name: playerName, color: playerColor, alive: true, y: 0.5, score: 0, joinedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+        refs.players.child(playerId).onDisconnect().remove();
+
+        if (isHost) refs.room.child('host').set(playerId);
+
+        refs.players.on('value', snap => {
+            const players = snap.val() || {};
+            const list = Object.values(players).map(p => p.name).join(', ');
+            document.getElementById('playerList').textContent = 'Players: ' + list;
+            const count = Object.keys(players).length;
+            document.getElementById('lobbyStatus').textContent = count + ' player(s) connected';
+            if (isHost && count >= 2) document.getElementById('startBtn').style.display = 'block';
+        });
+
+        document.getElementById('startBtn').addEventListener('click', async () => {
+            await refs.room.update({ state: 'playing', startTime: firebase.database.ServerValue.TIMESTAMP });
+        });
+
+        refs.room.child('state').on('value', snap => {
+            if (snap.val() === 'playing') window.location.href = 'game.html';
+        });
+
+        document.getElementById('leaveBtn').addEventListener('click', () => {
+            refs.players.child(playerId).remove();
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
