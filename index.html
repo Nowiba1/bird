@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flap Royale</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="landing-header">
+            <h1 class="game-title">🐤 FLAP ROYALE</h1>
+            <p class="game-subtitle">Multiplayer Flappy Battle</p>
+        </div>
+        <div class="landing-card">
+            <div class="input-group">
+                <label for="playerName">Your Name</label>
+                <input type="text" id="playerName" placeholder="Enter name..." maxlength="12" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Bird Color</label>
+                <div class="color-picker" id="colorPicker">
+                    <div class="color-option selected" data-color="#ffdd00" style="background:#ffdd00"></div>
+                    <div class="color-option" data-color="#ff4444" style="background:#ff4444"></div>
+                    <div class="color-option" data-color="#44aaff" style="background:#44aaff"></div>
+                    <div class="color-option" data-color="#44ff44" style="background:#44ff44"></div>
+                    <div class="color-option" data-color="#ff44ff" style="background:#ff44ff"></div>
+                    <div class="color-option" data-color="#ff8800" style="background:#ff8800"></div>
+                    <div class="color-option" data-color="#00ffff" style="background:#00ffff"></div>
+                    <div class="color-option" data-color="#ffffff" style="background:#ffffff"></div>
+                </div>
+            </div>
+            <div class="room-section">
+                <div class="create-join-tabs">
+                    <button class="tab active" data-tab="create" type="button">CREATE ROOM</button>
+                    <button class="tab" data-tab="join" type="button">JOIN ROOM</button>
+                </div>
+                <div class="room-panel active" id="createPanel">
+                    <button class="action-btn create-btn" id="createBtn" type="button">🎮 Create Room</button>
+                    <p class="room-info" id="roomInfo"></p>
+                </div>
+                <div class="room-panel" id="joinPanel">
+                    <input type="text" id="joinRoomCode" placeholder="Enter 4-letter code" maxlength="4" style="text-transform:uppercase;text-align:center;">
+                    <button class="action-btn join-btn" id="joinBtn" type="button">🚪 Join Room</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="firebase.js"></script>
+    <script>
+        let selectedColor = '#ffdd00';
+        document.getElementById('colorPicker').addEventListener('click', e => {
+            const opt = e.target.closest('.color-option');
+            if (!opt) return;
+            document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            selectedColor = opt.dataset.color;
+        });
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.room-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
+            });
+        });
+        document.getElementById('createBtn').addEventListener('click', async () => {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return alert('Enter a name!');
+            sessionStorage.setItem('playerName', name);
+            sessionStorage.setItem('birdColor', selectedColor);
+            const code = RoomManager.generateCode();
+            await RoomManager.createRoom(code);
+            sessionStorage.setItem('roomCode', code);
+            sessionStorage.setItem('isHost', 'true');
+            document.getElementById('roomInfo').textContent = 'Room: ' + code;
+            setTimeout(() => window.location.href = 'lobby.html', 800);
+        });
+        document.getElementById('joinBtn').addEventListener('click', async () => {
+            const name = document.getElementById('playerName').value.trim();
+            const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+            if (!name || code.length !== 4) return alert('Enter name and 4-letter code!');
+            const exists = await RoomManager.checkRoom(code);
+            if (!exists) return alert('Room not found!');
+            sessionStorage.setItem('playerName', name);
+            sessionStorage.setItem('birdColor', selectedColor);
+            sessionStorage.setItem('roomCode', code);
+            sessionStorage.setItem('isHost', 'false');
+            window.location.href = 'lobby.html';
+        });
+    </script>
+</body>
+</html>
