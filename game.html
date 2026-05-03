@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flap Royale - Game</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#000; overflow:hidden; touch-action:none; }
+        canvas { display:block; }
+        #hud { position:fixed; top:15px; left:50%; transform:translateX(-50%); z-index:10; display:flex; gap:15px; }
+        #hud div { background:rgba(0,0,0,0.6); color:#fff; padding:10px 20px; border-radius:25px; font-weight:700; font-family:sans-serif; font-size:1.1rem; }
+        #tapHint { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.6); font-family:sans-serif; font-size:1rem; z-index:10; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="hud">
+        <div id="aliveHud">🟢 0</div>
+        <div id="scoreHud">🏆 0</div>
+    </div>
+    <div id="tapHint">TAP or SPACE to FLAP</div>
+
+    <script>
+        // ============ FIREBASE INIT ============
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5WWU8JzA8mIrDKrhKy336jQ6mKOT7FUs",
+            authDomain: "snake-ftw.firebaseapp.com",
+            databaseURL: "https://snake-ftw-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "snake-ftw",
+            storageBucket: "snake-ftw.firebasestorage.app",
+            messagingSenderId: "786454070390",
+            appId: "1:786454070390:web:97c2f2ab60922513b90b57"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ============ GAME SETUP ============
+        const roomCode = sessionStorage.getItem('roomCode');
+        const playerId = sessionStorage.getItem('playerId');
+        const isHost = sessionStorage.getItem('isHost') === 'true';
+        const playerName = sessionStorage.getItem('playerName');
+        const birdColor = sessionStorage.getItem('birdColor') || '#ffdd00';
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const roomRef = db.ref('rooms/' + roomCode);
+        const playersRef = db.ref('rooms/' + roomCode + '/players');
+
+        // ============ BIRD CLASS ============
+        class Bird {
+            constructor(data) {
+                this.id = data.id;
+                this.name = data.name;
+                this.color = data.color;
+                this.y = data.y || 0.5;
+                this.vy = 0;
+                this.alive = data.alive !== false;
+                this.score = data.score || 0;
+                this.rotation = 0;
+            }
+            flap() {
+                if (!this.alive) return;
+                this.vy = -0.55;
+            }
+            update(dt) {
+                if (!this.alive) return;
+                this.vy += 0.9 * dt;
+                this.y += this.vy * dt;
+                if (this.y < 0) { this.y = 0; this.vy = 0; }
+                if (this.y > 1) { this.y = 1; this.die(); }
+                this.rotation = this.vy * 60;
+            }
+            die() {
+                this.alive = false;
+                this.vy = -0.3;
+            }
+            checkPipe(pipe) {
+                if (!this.alive) return false;
+                const bx = 0.25;
+                const bw = 0.06;
+                const bh = 0.06;
+                const by = this.y;
+                if (bx + bw > pipe.x - pipe.width/2 && bx - bw < pipe.x + pipe.width/2) {
+                    if (by - bh < pipe.gapY - pipe.gapSize/2 || by + bh > pipe.gapY + pipe.gapSize/2) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            serialize() {
+                return {
+                    id: this.id, name: this.name, color: this.color,
+                    y: this.y, alive: this.alive, score: this.score
+                };
+            }
+            render(ctx, w, h, isLocal) {
+                if (!this.alive) return;
+                const x = w * 0.25;
+                const y = this.y * h;
+                const s = Math.min(w, h) * 0.045;
+
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+
+                // Body
+                const bodyGrad = ctx.createRadialGradient(-s*0.1, -s*0.2, s*0.1, 0, 0, s);
+                bodyGrad.addColorStop(0, '#ffffff');
+                bodyGrad.addColorStop(0.3, this.color);
+                bodyGrad.addColorStop(1, this.darken(this.color, 40));
+                ctx.fillStyle = bodyGrad;
+                ctx.beginPath();
+                ctx.arc(0, 0, s, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Wing
+                const wingY = Math.sin(Date.now() * 0.015) * 3;
+                ctx.fillStyle = this.darken(this.color, 30);
+                ctx.beginPath();
+                ctx.ellipse(-s * 0.5, s * 0.2 + wingY, s * 0.65, s * 0.35, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Beak
+                ctx.fillStyle = '#ff9900';
+                ctx.beginPath();
+                ctx.moveTo(s * 0.7, -s * 0.1);
+                ctx.lineTo(s * 1.4, s * 0.05);
+                ctx.lineTo(s * 0.7, s * 0.2);
+                ctx.closePath();
+                ctx.fill();
+
+                // Eye
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(s * 0.35, -s * 0.25, s * 0.28, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(s * 0.45, -s * 0.25, s * 0.14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(s * 0.48, -s * 0.3, s * 0.05, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Local player glow
+                if (isLocal) {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = '#fff';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s + 4, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.restore();
+
+                // Name tag
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${s*0.9}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, x, y - s * 2);
+            }
+            darken(hex, pct) {
+                let r = parseInt(hex.slice(1,3),16);
+                let g = parseInt(hex.slice(3,5),16);
+                let b = parseInt(hex.slice(5,7),16);
+                r = Math.max(0, r - Math.floor(r * pct / 100));
+                g = Math.max(0, g - Math.floor(g * pct / 100));
+                b = Math.max(0, b - Math.floor(b * pct / 100));
+                return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+            }
+        }
+
+        // ============ PIPE SYSTEM ============
+        const PipeManager = {
+            pipes: [],
+            spawnTimer: 0,
+            spawnInterval: 2.5,
+            gapSize: 0.24,
+            speed: 0.25,
+
+            init() {
+                this.pipes = [];
+                this.spawnTimer = 0;
+            },
+            update(dt) {
+                this.spawnTimer += dt;
+                if (this.spawnTimer >= this.spawnInterval) {
+                    this.spawnTimer -= this.spawnInterval;
+                    const gapY = 0.3 + Math.random() * 0.4;
+                    this.pipes.push({
+                        x: 1.15,
+                        gapY: gapY,
+                        gapSize: this.gapSize,
+                        width: 0.08,
+                        passed: false
+                    });
+                }
+                for (let p of this.pipes) {
+                    p.x -= this.speed * dt;
+                }
+                this.pipes = this.pipes.filter(p => p.x > -0.3);
+            },
+            checkPassed(birdX) {
+                for (let p of this.pipes) {
+                    if (!p.passed && p.x + p.width/2 < birdX) {
+                        p.passed = true;
+                        return true;
+                    }
+                }
+                return false;
+            },
+            render(ctx, w, h) {
+                for (let p of this.pipes) {
+                    const px = p.x * w;
+                    const topH = (p.gapY - p.gapSize/2) * h;
+                    const botY = (p.gapY + p.gapSize/2) * h;
+                    const pw = p.width * w;
+
+                    // Pipe body
+                    ctx.fillStyle = '#3cb043';
+                    ctx.fillRect(px - pw/2, 0, pw, topH);
+                    ctx.fillRect(px - pw/2, botY, pw, h - botY);
+
+                    // Pipe cap
+                    ctx.fillStyle = '#2d8a2d';
+                    ctx.fillRect(px - pw/2 - 8, topH - 25, pw + 16, 25);
+                    ctx.fillRect(px - pw/2 - 8, botY, pw + 16, 25);
+
+                    // Pipe highlight
+                    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+                    ctx.fillRect(px - pw/2 + 4, 0, 4, topH);
+                    ctx.fillRect(px - pw/2 + 4, botY, 4, h - botY);
+                }
+            }
+        };
+
+        // ============ PLAYERS STORE ============
+        const birds = {};
+        let localBird = null;
+
+        // ============ HOST GAME LOOP ============
+        if (isHost) {
+            PipeManager.init();
+            let lastTime = performance.now();
+            setInterval(() => {
+                const now = performance.now();
+                const dt = Math.min(0.1, (now - lastTime) / 1000);
+                lastTime = now;
+
+                PipeManager.update(dt);
+
+                for (let id in birds) {
+                    const bird = birds[id];
+                    if (!bird.alive) continue;
+                    bird.update(dt);
+
+                    for (let pipe of PipeManager.pipes) {
+                        if (bird.checkPipe(pipe)) {
+                            bird.die();
+                        }
+                    }
+                    if (PipeManager.checkPassed(0.25)) {
+                        bird.score++;
+                    }
+                }
+
+                // Check if all dead -> reset
+                const allDead = Object.values(birds).every(b => !b.alive);
+                if (allDead) {
+                    PipeManager.init();
+                    for (let id in birds) {
+                        birds[id].alive = true;
+                        birds[id].y = 0.5;
+                        birds[id].vy = 0;
+                        birds[id].score = 0;
+                    }
+                }
+
+                // Sync to Firebase
+                const updates = {};
+                for (let id in birds) {
+                    updates[id] = birds[id].serialize();
+                }
+                playersRef.set(updates);
+
+            }, 50); // 20 ticks per second
+        }
+
+        // ============ FIREBASE LISTENER ============
+        playersRef.on('value', snap => {
+            const data = snap.val() || {};
+
+            // Remove disconnected
+            for (let id of Object.keys(birds)) {
+                if (!data[id]) delete birds[id];
+            }
+
+            // Update / create
+            for (let id in data) {
+                const p = data[id];
+                if (!p) continue;
+
+                if (!birds[id]) {
+                    birds[id] = new Bird({ id, ...p });
+                    if (id === playerId) {
+                        localBird = birds[id];
+                    }
+                } else if (id !== playerId) {
+                    birds[id].y = p.y;
+                    birds[id].alive = p.alive;
+                    birds[id].score = p.score;
+                }
+            }
+
+            // Update HUD
+            const aliveCount = Object.values(birds).filter(b => b.alive).length;
+            document.getElementById('aliveHud').textContent = '🟢 ' + aliveCount;
+            if (localBird) {
+                document.getElementById('scoreHud').textContent = '🏆 ' + localBird.score;
+            }
+        });
+
+        // ============ INPUT ============
+        function flap() {
+            if (localBird && localBird.alive) {
+                localBird.flap();
+                // For non-host, send flap to host
+                if (!isHost) {
+                    playersRef.child(playerId).update({ y: localBird.y, vy: localBird.vy });
+                }
+            }
+        }
+
+        window.addEventListener('keydown', e => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                flap();
+            }
+        });
+
+        canvas.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            flap();
+        });
+
+        document.addEventListener('touchstart', e => {
+            e.preventDefault();
+            flap();
+        }, { passive: false });
+
+        // ============ RENDER LOOP ============
+        function render() {
+            requestAnimationFrame(render);
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Sky gradient
+            const sky = ctx.createLinearGradient(0, 0, 0, h);
+            sky.addColorStop(0, '#4ec0ca');
+            sky.addColorStop(0.7, '#7ed6df');
+            sky.addColorStop(1, '#c7ecee');
+            ctx.fillStyle = sky;
+            ctx.fillRect(0, 0, w, h);
+
+            // Clouds
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            const t = Date.now() * 0.0001;
+            for (let i = 0; i < 5; i++) {
+                const cx = ((i * 200) + t * 20) % (w + 200) - 100;
+                const cy = 40 + i * 30;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 25, 0, Math.PI * 2);
+                ctx.arc(cx + 25, cy - 10, 20, 0, Math.PI * 2);
+                ctx.arc(cx - 20, cy - 5, 18, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Ground
+            const ground = ctx.createLinearGradient(0, h - 80, 0, h);
+            ground.addColorStop(0, '#8B5E3C');
+            ground.addColorStop(1, '#5C3A1E');
+            ctx.fillStyle = ground;
+            ctx.fillRect(0, h - 80, w, 80);
+            ctx.fillStyle = '#6B4226';
+            ctx.fillRect(0, h - 80, w, 6);
+            ctx.fillStyle = '#4a8c3f';
+            ctx.fillRect(0, h - 80, w, 3);
+
+            // Pipes
+            if (isHost) PipeManager.render(ctx, w, h);
+
+            // Birds (remote first, local on top)
+            for (let id in birds) {
+                if (id === playerId) continue;
+                if (birds[id]) birds[id].render(ctx, w, h, false);
+            }
+            if (localBird) {
+                localBird.render(ctx, w, h, true);
+            }
+        }
+
+        // ============ START ============
+        // Initialize ourselves in birds
+        birds[playerId] = new Bird({
+            id: playerId,
+            name: playerName,
+            color: birdColor,
+            y: 0.5,
+            alive: true,
+            score: 0
+        });
+        localBird = birds[playerId];
+
+        // Check for game state redirect
+        roomRef.child('state').on('value', snap => {
+            if (snap.val() === 'lobby') {
+                location.href = 'lobby.html';
+            }
+        });
+
+        // Start render
+        render();
+
+        // Hide tap hint on first interaction
+        function hideHint() {
+            document.getElementById('tapHint').style.display = 'none';
+            window.removeEventListener('keydown', hideHint);
+            canvas.removeEventListener('pointerdown', hideHint);
+        }
+        window.addEventListener('keydown', hideHint, { once: true });
+        canvas.addEventListener('pointerdown', hideHint, { once: true });
+    </script>
+</body>
+</html>
