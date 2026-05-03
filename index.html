@@ -4,91 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Flap Royale</title>
-    <link rel="stylesheet" href="main.css">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#0a0a1a; color:#fff; font-family:'Segoe UI',sans-serif; overflow:hidden; height:100vh; }
+        .container { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; padding:20px; }
+        h1 { font-size:3rem; color:#ffdd00; text-shadow:0 0 20px rgba(255,221,0,0.5); }
+        .subtitle { color:#aaa; }
+        .card { background:#1a1a2e; padding:25px; border-radius:16px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:15px; }
+        .input-group { display:flex; flex-direction:column; gap:5px; }
+        .input-group label { font-size:0.8rem; color:#aaa; text-transform:uppercase; }
+        input { background:#0a0a1a; border:1px solid #333; border-radius:8px; padding:12px; color:#fff; font-size:1rem; outline:none; }
+        input:focus { border-color:#ffdd00; }
+        .color-picker { display:flex; gap:8px; flex-wrap:wrap; }
+        .color-dot { width:32px; height:32px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
+        .color-dot.selected { border-color:#fff; box-shadow:0 0 12px currentColor; }
+        .tabs { display:flex; gap:2px; }
+        .tab { flex:1; padding:10px; background:transparent; color:#aaa; border:none; cursor:pointer; border-radius:8px; font-weight:700; }
+        .tab.active { background:#ffdd00; color:#000; }
+        .panel { display:none; flex-direction:column; gap:12px; }
+        .panel.active { display:flex; }
+        .btn { background:#1a1a2e; color:#fff; border:2px solid #ffdd00; border-radius:10px; padding:14px; font-size:1.1rem; font-weight:700; cursor:pointer; }
+        .btn:hover { box-shadow:0 0 15px rgba(255,221,0,0.5); }
+        .btn.join { border-color:#ff8800; }
+        .btn.join:hover { box-shadow:0 0 15px rgba(255,136,0,0.5); }
+        .info { color:#aaa; font-size:0.85rem; text-align:center; margin-top:5px; }
+        .divider { border-top:1px solid #333; padding-top:15px; margin-top:5px; }
+    </style>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-    <div class="landing-container">
-        <div class="landing-header">
-            <h1 class="game-title">🐤 FLAP ROYALE</h1>
-            <p class="game-subtitle">Multiplayer Flappy Battle</p>
-        </div>
-        <div class="landing-card">
+    <div class="container">
+        <h1>🐤 FLAP ROYALE</h1>
+        <p class="subtitle">Multiplayer Flappy Battle</p>
+        <div class="card">
             <div class="input-group">
-                <label for="playerName">Your Name</label>
+                <label>Your Name</label>
                 <input type="text" id="playerName" placeholder="Enter name..." maxlength="12" autocomplete="off">
             </div>
             <div class="input-group">
                 <label>Bird Color</label>
                 <div class="color-picker" id="colorPicker">
-                    <div class="color-option selected" data-color="#ffdd00" style="background:#ffdd00"></div>
-                    <div class="color-option" data-color="#ff4444" style="background:#ff4444"></div>
-                    <div class="color-option" data-color="#44aaff" style="background:#44aaff"></div>
-                    <div class="color-option" data-color="#44ff44" style="background:#44ff44"></div>
-                    <div class="color-option" data-color="#ff44ff" style="background:#ff44ff"></div>
-                    <div class="color-option" data-color="#ff8800" style="background:#ff8800"></div>
-                    <div class="color-option" data-color="#00ffff" style="background:#00ffff"></div>
-                    <div class="color-option" data-color="#ffffff" style="background:#ffffff"></div>
+                    <span class="color-dot selected" data-color="#ffdd00" style="background:#ffdd00"></span>
+                    <span class="color-dot" data-color="#ff4444" style="background:#ff4444"></span>
+                    <span class="color-dot" data-color="#4488ff" style="background:#4488ff"></span>
+                    <span class="color-dot" data-color="#44ff44" style="background:#44ff44"></span>
+                    <span class="color-dot" data-color="#ff44ff" style="background:#ff44ff"></span>
+                    <span class="color-dot" data-color="#ff8800" style="background:#ff8800"></span>
+                    <span class="color-dot" data-color="#00ffff" style="background:#00ffff"></span>
+                    <span class="color-dot" data-color="#ffffff" style="background:#ffffff"></span>
                 </div>
             </div>
-            <div class="room-section">
-                <div class="create-join-tabs">
-                    <button class="tab active" data-tab="create" type="button">CREATE ROOM</button>
-                    <button class="tab" data-tab="join" type="button">JOIN ROOM</button>
+            <div class="divider">
+                <div class="tabs">
+                    <button class="tab active" data-tab="create">CREATE ROOM</button>
+                    <button class="tab" data-tab="join">JOIN ROOM</button>
                 </div>
-                <div class="room-panel active" id="createPanel">
-                    <button class="action-btn create-btn" id="createBtn" type="button">🎮 Create Room</button>
-                    <p class="room-info" id="roomInfo"></p>
+                <div class="panel active" id="createPanel">
+                    <button class="btn" id="createBtn">🎮 Create Room</button>
+                    <p class="info" id="createInfo"></p>
                 </div>
-                <div class="room-panel" id="joinPanel">
-                    <input type="text" id="joinRoomCode" placeholder="Enter 4-letter code" maxlength="4" style="text-transform:uppercase;text-align:center;">
-                    <button class="action-btn join-btn" id="joinBtn" type="button">🚪 Join Room</button>
+                <div class="panel" id="joinPanel">
+                    <input type="text" id="joinCode" placeholder="Enter 4-letter code" maxlength="4" style="text-transform:uppercase;text-align:center;">
+                    <button class="btn join" id="joinBtn">🚪 Join Room</button>
                 </div>
             </div>
         </div>
     </div>
-    <script src="firebase.js"></script>
+
     <script>
+        // Firebase init
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5WWU8JzA8mIrDKrhKy336jQ6mKOT7FUs",
+            authDomain: "snake-ftw.firebaseapp.com",
+            databaseURL: "https://snake-ftw-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "snake-ftw",
+            storageBucket: "snake-ftw.firebasestorage.app",
+            messagingSenderId: "786454070390",
+            appId: "1:786454070390:web:97c2f2ab60922513b90b57"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function genCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+            let c = '';
+            for (let i = 0; i < 4; i++) c += chars[Math.floor(Math.random() * chars.length)];
+            return c;
+        }
+        async function createRoom(code) {
+            await db.ref('rooms/' + code).set({
+                state: 'lobby', host: '', createdAt: firebase.database.ServerValue.TIMESTAMP
+            });
+        }
+        async function checkRoom(code) {
+            const snap = await db.ref('rooms/' + code).once('value');
+            return snap.exists();
+        }
+
         let selectedColor = '#ffdd00';
+
         document.getElementById('colorPicker').addEventListener('click', e => {
-            const opt = e.target.closest('.color-option');
-            if (!opt) return;
-            document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-            selectedColor = opt.dataset.color;
+            const dot = e.target.closest('.color-dot');
+            if (!dot) return;
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+            dot.classList.add('selected');
+            selectedColor = dot.dataset.color;
         });
+
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                document.querySelectorAll('.room-panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
                 document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
             });
         });
+
         document.getElementById('createBtn').addEventListener('click', async () => {
             const name = document.getElementById('playerName').value.trim();
             if (!name) return alert('Enter a name!');
             sessionStorage.setItem('playerName', name);
             sessionStorage.setItem('birdColor', selectedColor);
-            const code = RoomManager.generateCode();
-            await RoomManager.createRoom(code);
+            const code = genCode();
+            await createRoom(code);
             sessionStorage.setItem('roomCode', code);
             sessionStorage.setItem('isHost', 'true');
-            document.getElementById('roomInfo').textContent = 'Room: ' + code;
-            setTimeout(() => window.location.href = 'lobby.html', 800);
+            document.getElementById('createInfo').textContent = 'Room: ' + code;
+            setTimeout(() => location.href = 'lobby.html', 800);
         });
+
         document.getElementById('joinBtn').addEventListener('click', async () => {
             const name = document.getElementById('playerName').value.trim();
-            const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+            const code = document.getElementById('joinCode').value.trim().toUpperCase();
             if (!name || code.length !== 4) return alert('Enter name and 4-letter code!');
-            const exists = await RoomManager.checkRoom(code);
+            const exists = await checkRoom(code);
             if (!exists) return alert('Room not found!');
             sessionStorage.setItem('playerName', name);
             sessionStorage.setItem('birdColor', selectedColor);
             sessionStorage.setItem('roomCode', code);
             sessionStorage.setItem('isHost', 'false');
-            window.location.href = 'lobby.html';
+            location.href = 'lobby.html';
         });
     </script>
 </body>
