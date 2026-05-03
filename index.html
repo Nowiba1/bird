@@ -2,78 +2,404 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Flap Royale</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake FTW - Multiplayer</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#0a0a1a; color:#fff; font-family:'Segoe UI',sans-serif; overflow:hidden; height:100vh; }
-        .container { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; padding:20px; }
-        h1 { font-size:3rem; color:#ffdd00; text-shadow:0 0 20px rgba(255,221,0,0.5); }
-        .subtitle { color:#aaa; }
-        .card { background:#1a1a2e; padding:25px; border-radius:16px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:15px; }
-        .input-group { display:flex; flex-direction:column; gap:5px; }
-        .input-group label { font-size:0.8rem; color:#aaa; text-transform:uppercase; }
-        input { background:#0a0a1a; border:1px solid #333; border-radius:8px; padding:12px; color:#fff; font-size:1rem; outline:none; }
-        input:focus { border-color:#ffdd00; }
-        .color-picker { display:flex; gap:8px; flex-wrap:wrap; }
-        .color-dot { width:32px; height:32px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
-        .color-dot.selected { border-color:#fff; box-shadow:0 0 12px currentColor; }
-        .tabs { display:flex; gap:2px; }
-        .tab { flex:1; padding:10px; background:transparent; color:#aaa; border:none; cursor:pointer; border-radius:8px; font-weight:700; }
-        .tab.active { background:#ffdd00; color:#000; }
-        .panel { display:none; flex-direction:column; gap:12px; }
-        .panel.active { display:flex; }
-        .btn { background:#1a1a2e; color:#fff; border:2px solid #ffdd00; border-radius:10px; padding:14px; font-size:1.1rem; font-weight:700; cursor:pointer; }
-        .btn:hover { box-shadow:0 0 15px rgba(255,221,0,0.5); }
-        .btn.join { border-color:#ff8800; }
-        .btn.join:hover { box-shadow:0 0 15px rgba(255,136,0,0.5); }
-        .info { color:#aaa; font-size:0.85rem; text-align:center; margin-top:5px; }
-        .divider { border-top:1px solid #333; padding-top:15px; margin-top:5px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #0d1117;
+            color: #c9d1d9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .screen.active { display: flex; }
+
+        /* Menu */
+        #menuScreen { justify-content: center; gap: 30px; }
+        
+        .logo {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #238636;
+            text-shadow: 0 0 20px rgba(35, 134, 54, 0.5);
+            letter-spacing: 4px;
+            text-align: center;
+        }
+        
+        .logo span { color: #58a6ff; }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        button {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #2ea043;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(35, 134, 54, 0.3);
+        }
+
+        button.secondary {
+            background: #21262d;
+            border: 1px solid #30363d;
+        }
+        
+        button.secondary:hover { background: #30363d; }
+
+        button.danger {
+            background: #da3633;
+        }
+        
+        button.danger:hover { background: #f85149; }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Inputs */
+        input[type="text"] {
+            width: 100%;
+            max-width: 320px;
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            background: #0d1117;
+            color: #c9d1d9;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        
+        input[type="text"]::placeholder { color: #484f58; text-transform: none; }
+        input[type="text"]:focus { outline: none; border-color: #58a6ff; }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 320px;
+            align-items: center;
+        }
+
+        .or-divider {
+            color: #484f58;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        /* Game Header */
+        .game-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .back-btn {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .score {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #58a6ff;
+        }
+
+        /* Canvas */
+        canvas {
+            border: 2px solid #30363d;
+            border-radius: 8px;
+            background: #010409;
+            max-width: 100%;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* Lobby */
+        .room-code-display {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 8px;
+            color: #58a6ff;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .room-code-display button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .players-list {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .player-item {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .player-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .player-name { flex: 1; font-weight: 600; }
+        .player-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #238636;
+            color: white;
+        }
+
+        .mp-scores {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .mp-score-item {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* Mobile Controls */
+        .mobile-controls {
+            display: none;
+            margin-top: 20px;
+            grid-template-columns: repeat(3, 70px);
+            grid-template-rows: repeat(3, 70px);
+            gap: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-controls { display: grid; }
+            .logo { font-size: 2.5rem; }
+        }
+
+        .dpad-btn {
+            width: 70px;
+            height: 70px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .dpad-btn:active { background: #30363d; }
+        .dpad-up { grid-column: 2; grid-row: 1; }
+        .dpad-left { grid-column: 1; grid-row: 2; }
+        .dpad-right { grid-column: 3; grid-row: 2; }
+        .dpad-down { grid-column: 2; grid-row: 3; }
+
+        /* Game Over Overlay */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-over-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .game-over-box h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #f85149;
+        }
+        
+        .game-over-box p {
+            margin-bottom: 25px;
+            color: #8b949e;
+            line-height: 1.5;
+        }
+
+        .winner-text { color: #58a6ff !important; font-weight: 700; }
+
+        /* Instructions */
+        .instructions {
+            color: #484f58;
+            font-size: 0.85rem;
+            margin-top: 20px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        h2 { margin-bottom: 10px; color: #e6edf3; }
+        
+        .status-waiting { color: #d29922; }
+        .status-playing { color: #3fb950; }
+        .status-ended { color: #f85149; }
     </style>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>🐤 FLAP ROYALE</h1>
-        <p class="subtitle">Multiplayer Flappy Battle</p>
-        <div class="card">
-            <div class="input-group">
-                <label>Your Name</label>
-                <input type="text" id="playerName" placeholder="Enter name..." maxlength="12" autocomplete="off">
-            </div>
-            <div class="input-group">
-                <label>Bird Color</label>
-                <div class="color-picker" id="colorPicker">
-                    <span class="color-dot selected" data-color="#ffdd00" style="background:#ffdd00"></span>
-                    <span class="color-dot" data-color="#ff4444" style="background:#ff4444"></span>
-                    <span class="color-dot" data-color="#4488ff" style="background:#4488ff"></span>
-                    <span class="color-dot" data-color="#44ff44" style="background:#44ff44"></span>
-                    <span class="color-dot" data-color="#ff44ff" style="background:#ff44ff"></span>
-                    <span class="color-dot" data-color="#ff8800" style="background:#ff8800"></span>
-                    <span class="color-dot" data-color="#00ffff" style="background:#00ffff"></span>
-                    <span class="color-dot" data-color="#ffffff" style="background:#ffffff"></span>
-                </div>
-            </div>
-            <div class="divider">
-                <div class="tabs">
-                    <button class="tab active" data-tab="create">CREATE ROOM</button>
-                    <button class="tab" data-tab="join">JOIN ROOM</button>
-                </div>
-                <div class="panel active" id="createPanel">
-                    <button class="btn" id="createBtn">🎮 Create Room</button>
-                    <p class="info" id="createInfo"></p>
-                </div>
-                <div class="panel" id="joinPanel">
-                    <input type="text" id="joinCode" placeholder="Enter 4-letter code" maxlength="4" style="text-transform:uppercase;text-align:center;">
-                    <button class="btn join" id="joinBtn">🚪 Join Room</button>
-                </div>
-            </div>
+
+    <!-- MENU -->
+    <div id="menuScreen" class="screen active">
+        <div class="logo">SNAKE <span>FTW</span></div>
+        <div class="menu-buttons">
+            <button onclick="showScreen('singlePlayerScreen'); startSinglePlayer()">🎮 Single Player</button>
+            <button class="secondary" onclick="showScreen('multiplayerMenu')">🌐 Multiplayer</button>
+        </div>
+        <div class="instructions">
+            Use Arrow Keys or WASD to move<br>
+            Eat food to grow. Don't hit walls or yourself!<br>
+            In multiplayer, last snake alive wins.
         </div>
     </div>
 
-    <script>
-        // Firebase init
+    <!-- SINGLE PLAYER -->
+    <div id="singlePlayerScreen" class="screen">
+        <div class="game-header">
+            <button class="back-btn secondary" onclick="showScreen('menuScreen'); stopSinglePlayer()">← Back</button>
+            <div class="score">Score: <span id="spScore">0</span> | High: <span id="spHigh">0</span></div>
+        </div>
+        <canvas id="spCanvas" width="625" height="625"></canvas>
+        <div class="mobile-controls" id="spMobile">
+            <div class="dpad-btn dpad-up" ontouchstart="spSetDir('up')" onclick="spSetDir('up')">▲</div>
+            <div class="dpad-btn dpad-left" ontouchstart="spSetDir('left')" onclick="spSetDir('left')">◀</div>
+            <div class="dpad-btn dpad-right" ontouchstart="spSetDir('right')" onclick="spSetDir('right')">▶</div>
+            <div class="dpad-btn dpad-down" ontouchstart="spSetDir('down')" onclick="spSetDir('down')">▼</div>
+        </div>
+    </div>
+
+    <!-- MULTIPLAYER MENU -->
+    <div id="multiplayerMenu" class="screen">
+        <button class="back-btn secondary" onclick="showScreen('menuScreen')">← Back</button>
+        <h2>Multiplayer</h2>
+        <div class="input-group" style="margin-top: 30px;">
+            <input type="text" id="playerName" placeholder="Your Name" maxlength="12">
+            <button onclick="createRoom()">➕ Create Room</button>
+            <div class="or-divider">— OR —</div>
+            <input type="text" id="roomCodeInput" placeholder="Room Code (AB12)" maxlength="4">
+            <button class="secondary" onclick="joinRoom()">🔗 Join Room</button>
+        </div>
+        <div class="instructions" id="mpError" style="color: #f85149;"></div>
+    </div>
+
+    <!-- LOBBY -->
+    <div id="lobbyScreen" class="screen">
+        <h2>Game Lobby</h2>
+        <div class="room-code-display">
+            <span id="displayRoomCode">----</span>
+            <button class="secondary" onclick="copyRoomCode()">Copy</button>
+        </div>
+        <div style="margin-bottom: 10px;" id="lobbyStatus" class="status-waiting">Waiting for players...</div>
+        <div class="players-list" id="playersList"></div>
+        <div class="menu-buttons" style="margin-top: 20px;">
+            <button id="startGameBtn" onclick="startMultiplayerGame()" style="display:none">▶ Start Game</button>
+            <button class="danger" onclick="leaveRoom()">Leave Room</button>
+        </div>
+    </div>
+
+    <!-- MULTIPLAYER GAME -->
+    <div id="multiplayerGame" class="screen">
+        <div class="game-header">
+            <button class="back-btn danger" onclick="leaveRoom(); showScreen('menuScreen')">✕ Quit</button>
+            <div class="mp-scores" id="mpScores"></div>
+        </div>
+        <canvas id="mpCanvas" width="625" height="625"></canvas>
+        <div class="mobile-controls" id="mpMobile">
+            <div class="dpad-btn dpad-up" ontouchstart="mpSetDir('up')" onclick="mpSetDir('up')">▲</div>
+            <div class="dpad-btn dpad-left" ontouchstart="mpSetDir('left')" onclick="mpSetDir('left')">◀</div>
+            <div class="dpad-btn dpad-right" ontouchstart="mpSetDir('right')" onclick="mpSetDir('right')">▶</div>
+            <div class="dpad-btn dpad-down" ontouchstart="mpSetDir('down')" onclick="mpSetDir('down')">▼</div>
+        </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOverScreen" class="screen overlay">
+        <div class="game-over-box">
+            <h2 id="goTitle">Game Over</h2>
+            <p id="goMessage"></p>
+            <button onclick="closeGameOver()">Main Menu</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, remove, off, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // ==================== FIREBASE ====================
         const firebaseConfig = {
             apiKey: "AIzaSyB5WWU8JzA8mIrDKrhKy336jQ6mKOT7FUs",
             authDomain: "snake-ftw.firebaseapp.com",
@@ -83,68 +409,578 @@
             messagingSenderId: "786454070390",
             appId: "1:786454070390:web:97c2f2ab60922513b90b57"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
 
-        function genCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-            let c = '';
-            for (let i = 0; i < 4; i++) c += chars[Math.floor(Math.random() * chars.length)];
-            return c;
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ==================== CONSTANTS ====================
+        const GRID_SIZE = 25;
+        const CELL_SIZE = 25;
+        const CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
+        const GAME_SPEED = 120;
+        const COLORS = ['#3fb950', '#58a6ff', '#f0883e', '#f778ba', '#a371f7', '#56d364'];
+
+        // ==================== STATE ====================
+        let currentScreen = 'menuScreen';
+        let myPlayerId = localStorage.getItem('snake_player_id') || 'p_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('snake_player_id', myPlayerId);
+        
+        let roomCode = null;
+        let isHost = false;
+        let roomRef = null;
+        let roomListener = null;
+        let gameLoopInterval = null;
+        let mpGameState = null;
+
+        // Single Player
+        let spGame = null;
+        let spHighScore = parseInt(localStorage.getItem('snake_high') || '0');
+
+        // ==================== UTILS ====================
+        window.showScreen = (id) => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            currentScreen = id;
+        };
+
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+            return code;
         }
-        async function createRoom(code) {
-            await db.ref('rooms/' + code).set({
-                state: 'lobby', host: '', createdAt: firebase.database.ServerValue.TIMESTAMP
+
+        function getOpposite(dir) {
+            return { up: 'down', down: 'up', left: 'right', right: 'left' }[dir];
+        }
+
+        function randomPos() {
+            return { x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE) };
+        }
+
+        function posEquals(a, b) {
+            return a && b && a.x === b.x && a.y === b.y;
+        }
+
+        // ==================== RENDERING ====================
+        function drawGrid(ctx) {
+            ctx.fillStyle = '#010409';
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            ctx.strokeStyle = '#161b22';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= GRID_SIZE; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * CELL_SIZE, 0);
+                ctx.lineTo(i * CELL_SIZE, CANVAS_SIZE);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(0, i * CELL_SIZE);
+                ctx.lineTo(CANVAS_SIZE, i * CELL_SIZE);
+                ctx.stroke();
+            }
+        }
+
+        function drawSnake(ctx, snake, color, isSelf) {
+            snake.forEach((seg, i) => {
+                const x = seg.x * CELL_SIZE;
+                const y = seg.y * CELL_SIZE;
+                
+                if (i === 0) {
+                    ctx.fillStyle = isSelf ? '#fff' : color;
+                    ctx.shadowColor = color;
+                    ctx.shadowBlur = isSelf ? 15 : 8;
+                } else {
+                    ctx.fillStyle = color;
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1 - (i / snake.length) * 0.6;
+                }
+                
+                ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+                ctx.globalAlpha = 1;
+                ctx.shadowBlur = 0;
             });
         }
-        async function checkRoom(code) {
-            const snap = await db.ref('rooms/' + code).once('value');
-            return snap.exists();
+
+        function drawFood(ctx, food) {
+            if (!food) return;
+            const x = food.x * CELL_SIZE + CELL_SIZE / 2;
+            const y = food.y * CELL_SIZE + CELL_SIZE / 2;
+            
+            ctx.fillStyle = '#f85149';
+            ctx.shadowColor = '#f85149';
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(x, y, CELL_SIZE / 2 - 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
         }
 
-        let selectedColor = '#ffdd00';
+        // ==================== SINGLE PLAYER ====================
+        window.startSinglePlayer = () => {
+            const canvas = document.getElementById('spCanvas');
+            const ctx = canvas.getContext('2d');
+            document.getElementById('spHigh').textContent = spHighScore;
+            
+            spGame = {
+                snake: [{x: 5, y: 12}, {x: 4, y: 12}, {x: 3, y: 12}],
+                direction: 'right',
+                nextDirection: 'right',
+                food: randomPos(),
+                score: 0,
+                alive: true
+            };
 
-        document.getElementById('colorPicker').addEventListener('click', e => {
-            const dot = e.target.closest('.color-dot');
-            if (!dot) return;
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
-            dot.classList.add('selected');
-            selectedColor = dot.dataset.color;
-        });
+            const loop = () => {
+                if (!spGame || !spGame.alive) return;
+                
+                spGame.direction = spGame.nextDirection;
+                const head = { ...spGame.snake[0] };
+                
+                if (spGame.direction === 'up') head.y--;
+                else if (spGame.direction === 'down') head.y++;
+                else if (spGame.direction === 'left') head.x--;
+                else if (spGame.direction === 'right') head.x++;
+                
+                // Wall collision
+                if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+                    spGame.alive = false;
+                    gameOver('Game Over', `Score: ${spGame.score}`);
+                    if (spGame.score > spHighScore) {
+                        spHighScore = spGame.score;
+                        localStorage.setItem('snake_high', spHighScore);
+                    }
+                    return;
+                }
+                
+                // Self collision
+                if (spGame.snake.some(s => posEquals(s, head))) {
+                    spGame.alive = false;
+                    gameOver('Game Over', `Score: ${spGame.score}`);
+                    if (spGame.score > spHighScore) {
+                        spHighScore = spGame.score;
+                        localStorage.setItem('snake_high', spHighScore);
+                    }
+                    return;
+                }
+                
+                spGame.snake.unshift(head);
+                
+                if (posEquals(head, spGame.food)) {
+                    spGame.score += 10;
+                    document.getElementById('spScore').textContent = spGame.score;
+                    let newFood = randomPos();
+                    while (spGame.snake.some(s => posEquals(s, newFood))) newFood = randomPos();
+                    spGame.food = newFood;
+                } else {
+                    spGame.snake.pop();
+                }
+                
+                drawGrid(ctx);
+                drawFood(ctx, spGame.food);
+                drawSnake(ctx, spGame.snake, '#3fb950', true);
+            };
+            
+            spGame.interval = setInterval(loop, GAME_SPEED);
+            drawGrid(ctx);
+            drawFood(ctx, spGame.food);
+            drawSnake(ctx, spGame.snake, '#3fb950', true);
+        };
 
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-                document.getElementById(tab.dataset.tab + 'Panel').classList.add('active');
+        window.stopSinglePlayer = () => {
+            if (spGame && spGame.interval) clearInterval(spGame.interval);
+            spGame = null;
+        };
+
+        window.spSetDir = (dir) => {
+            if (!spGame || !spGame.alive) return;
+            if (getOpposite(dir) !== spGame.direction) spGame.nextDirection = dir;
+        };
+
+        // ==================== MULTIPLAYER ====================
+        window.createRoom = async () => {
+            const name = document.getElementById('playerName').value.trim() || 'Player';
+            roomCode = generateRoomCode();
+            isHost = true;
+            
+            const roomData = {
+                status: 'waiting',
+                host: myPlayerId,
+                createdAt: Date.now(),
+                players: {
+                    [myPlayerId]: {
+                        name: name.substring(0, 12),
+                        color: COLORS[0],
+                        snake: [],
+                        direction: 'right',
+                        score: 0,
+                        alive: false,
+                        ready: true
+                    }
+                }
+            };
+            
+            await set(ref(db, 'rooms/' + roomCode), roomData);
+            enterLobby();
+        };
+
+        window.joinRoom = async () => {
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            const name = document.getElementById('playerName').value.trim() || 'Player';
+            const errEl = document.getElementById('mpError');
+            
+            if (code.length !== 4) {
+                errEl.textContent = 'Enter a valid 4-character room code';
+                return;
+            }
+            
+            const snapshot = await get(ref(db, 'rooms/' + code));
+            if (!snapshot.exists()) {
+                errEl.textContent = 'Room not found';
+                return;
+            }
+            
+            const room = snapshot.val();
+            if (room.status !== 'waiting') {
+                errEl.textContent = 'Game already in progress';
+                return;
+            }
+            
+            const playerCount = Object.keys(room.players || {}).length;
+            if (playerCount >= 6) {
+                errEl.textContent = 'Room is full (max 6)';
+                return;
+            }
+            
+            roomCode = code;
+            isHost = false;
+            
+            await update(ref(db, 'rooms/' + roomCode + '/players/' + myPlayerId), {
+                name: name.substring(0, 12),
+                color: COLORS[playerCount % COLORS.length],
+                snake: [],
+                direction: 'right',
+                score: 0,
+                alive: false,
+                ready: true
             });
+            
+            enterLobby();
+        };
+
+        function enterLobby() {
+            showScreen('lobbyScreen');
+            document.getElementById('displayRoomCode').textContent = roomCode;
+            
+            roomRef = ref(db, 'rooms/' + roomCode);
+            roomListener = onValue(roomRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    leaveRoom();
+                    gameOver('Room Closed', 'The host has left the room.');
+                    return;
+                }
+                
+                const room = snapshot.val();
+                renderLobby(room);
+                
+                if (room.status === 'playing' && currentScreen === 'lobbyScreen') {
+                    startMpGameplay(room);
+                }
+                
+                if (room.status === 'ended' && currentScreen === 'multiplayerGame') {
+                    endMpGame(room);
+                }
+            });
+        }
+
+        function renderLobby(room) {
+            const list = document.getElementById('playersList');
+            const players = room.players || {};
+            const count = Object.keys(players).length;
+            
+            document.getElementById('lobbyStatus').textContent = 
+                room.status === 'waiting' ? `Waiting for players... (${count} joined)` :
+                room.status === 'playing' ? 'Game in progress!' : 'Game ended';
+            document.getElementById('lobbyStatus').className = 
+                room.status === 'waiting' ? 'status-waiting' :
+                room.status === 'playing' ? 'status-playing' : 'status-ended';
+            
+            list.innerHTML = '';
+            Object.entries(players).forEach(([pid, p]) => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.innerHTML = `
+                    <div class="player-color" style="background:${p.color}"></div>
+                    <div class="player-name">${p.name} ${pid === myPlayerId ? '(You)' : ''}</div>
+                    ${pid === room.host ? '<div class="player-badge">HOST</div>' : ''}
+                `;
+                list.appendChild(div);
+            });
+            
+            const startBtn = document.getElementById('startGameBtn');
+            if (isHost && room.status === 'waiting' && count >= 1) {
+                startBtn.style.display = 'block';
+            } else {
+                startBtn.style.display = 'none';
+            }
+        }
+
+        window.copyRoomCode = () => {
+            navigator.clipboard.writeText(roomCode).then(() => {
+                const btn = event.target;
+                const old = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = old, 1500);
+            });
+        };
+
+        window.startMultiplayerGame = async () => {
+            if (!isHost) return;
+            
+            const snapshot = await get(ref(db, 'rooms/' + roomCode));
+            const room = snapshot.val();
+            const pids = Object.keys(room.players);
+            
+            // Initialize snake positions
+            const starts = [
+                [{x: 5, y: 5}, {x: 4, y: 5}, {x: 3, y: 5}],
+                [{x: 19, y: 19}, {x: 20, y: 19}, {x: 21, y: 19}],
+                [{x: 19, y: 5}, {x: 20, y: 5}, {x: 21, y: 5}],
+                [{x: 5, y: 19}, {x: 4, y: 19}, {x: 3, y: 19}],
+                [{x: 12, y: 2}, {x: 12, y: 3}, {x: 12, y: 4}],
+                [{x: 12, y: 22}, {x: 12, y: 21}, {x: 12, y: 20}]
+            ];
+            
+            const dirs = ['right', 'left', 'left', 'right', 'down', 'up'];
+            const updates = {};
+            
+            pids.forEach((pid, i) => {
+                updates[`players/${pid}/snake`] = starts[i] || starts[0];
+                updates[`players/${pid}/direction`] = dirs[i] || 'right';
+                updates[`players/${pid}/score`] = 0;
+                updates[`players/${pid}/alive`] = true;
+            });
+            
+            updates.food = randomPos();
+            updates.status = 'playing';
+            updates.winner = null;
+            
+            await update(ref(db, 'rooms/' + roomCode), updates);
+        };
+
+        function startMpGameplay(initialRoom) {
+            showScreen('multiplayerGame');
+            mpGameState = initialRoom;
+            
+            if (isHost) {
+                gameLoopInterval = setInterval(hostGameLoop, GAME_SPEED);
+            }
+            
+            // Listen for state updates
+            off(roomRef);
+            roomListener = onValue(roomRef, (snap) => {
+                if (!snap.exists()) return;
+                mpGameState = snap.val();
+                renderMpGame();
+                updateMpScores();
+            });
+        }
+
+        async function hostGameLoop() {
+            if (!mpGameState || mpGameState.status !== 'playing') return;
+            
+            const players = mpGameState.players;
+            const pids = Object.keys(players);
+            let aliveCount = 0;
+            let lastAlive = null;
+            const updates = {};
+            
+            pids.forEach(pid => {
+                const p = players[pid];
+                if (!p.alive) return;
+                
+                aliveCount++;
+                lastAlive = pid;
+                
+                const head = { ...p.snake[0] };
+                if (p.direction === 'up') head.y--;
+                else if (p.direction === 'down') head.y++;
+                else if (p.direction === 'left') head.x--;
+                else if (p.direction === 'right') head.x++;
+                
+                // Wall collision
+                if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+                    updates[`players/${pid}/alive`] = false;
+                    return;
+                }
+                
+                // Self collision
+                if (p.snake.some((s, i) => i > 0 && posEquals(s, head))) {
+                    updates[`players/${pid}/alive`] = false;
+                    return;
+                }
+                
+                // Other snake collision
+                let hitOther = false;
+                pids.forEach(opid => {
+                    if (opid === pid) return;
+                    const op = players[opid];
+                    if (op.snake.some(s => posEquals(s, head))) {
+                        hitOther = true;
+                    }
+                });
+                if (hitOther) {
+                    updates[`players/${pid}/alive`] = false;
+                    return;
+                }
+                
+                const newSnake = [head, ...p.snake];
+                
+                // Food
+                if (posEquals(head, mpGameState.food)) {
+                    updates[`players/${pid}/score`] = (p.score || 0) + 10;
+                    let newFood = randomPos();
+                    let occupied = true;
+                    let attempts = 0;
+                    while (occupied && attempts < 100) {
+                        occupied = false;
+                        pids.forEach(opid => {
+                            if (players[opid].snake.some(s => posEquals(s, newFood))) occupied = true;
+                        });
+                        if (occupied) newFood = randomPos();
+                        attempts++;
+                    }
+                    updates.food = newFood;
+                } else {
+                    newSnake.pop();
+                }
+                
+                updates[`players/${pid}/snake`] = newSnake;
+            });
+            
+            // Check win condition
+            if (aliveCount <= 1 && pids.length > 1) {
+                updates.status = 'ended';
+                updates.winner = lastAlive;
+            } else if (aliveCount === 0) {
+                updates.status = 'ended';
+                updates.winner = null;
+            }
+            
+            await update(ref(db, 'rooms/' + roomCode), updates);
+        }
+
+        function renderMpGame() {
+            const canvas = document.getElementById('mpCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            drawGrid(ctx);
+            if (mpGameState.food) drawFood(ctx, mpGameState.food);
+            
+            if (mpGameState.players) {
+                Object.entries(mpGameState.players).forEach(([pid, p]) => {
+                    if (p.snake && p.snake.length > 0) {
+                        drawSnake(ctx, p.snake, p.color, pid === myPlayerId);
+                    }
+                });
+            }
+        }
+
+        function updateMpScores() {
+            const container = document.getElementById('mpScores');
+            if (!mpGameState || !mpGameState.players) return;
+            
+            container.innerHTML = '';
+            Object.entries(mpGameState.players).forEach(([pid, p]) => {
+                const div = document.createElement('div');
+                div.className = 'mp-score-item';
+                div.style.borderLeft = `3px solid ${p.color}`;
+                div.innerHTML = `${p.name}: ${p.score || 0} ${p.alive ? '●' : '✕'}`;
+                container.appendChild(div);
+            });
+        }
+
+        function endMpGame(room) {
+            const winner = room.winner ? room.players[room.winner] : null;
+            if (winner) {
+                gameOver('Game Over!', `Winner: ${winner.name} with ${winner.score || 0} points!`);
+            } else {
+                gameOver('Game Over!', 'It\'s a draw!');
+            }
+            clearInterval(gameLoopInterval);
+        }
+
+        window.mpSetDir = async (dir) => {
+            if (!mpGameState || mpGameState.status !== 'playing') return;
+            const p = mpGameState.players[myPlayerId];
+            if (!p || !p.alive) return;
+            if (getOpposite(dir) === p.direction) return;
+            
+            await update(ref(db, `rooms/${roomCode}/players/${myPlayerId}`), {
+                direction: dir
+            });
+        };
+
+        window.leaveRoom = async () => {
+            if (roomListener) off(roomRef, 'value', roomListener);
+            clearInterval(gameLoopInterval);
+            
+            if (roomCode) {
+                if (isHost) {
+                    await remove(ref(db, 'rooms/' + roomCode));
+                } else {
+                    await remove(ref(db, `rooms/${roomCode}/players/${myPlayerId}`));
+                    const snap = await get(ref(db, 'rooms/' + roomCode));
+                    if (snap.exists() && (!snap.val().players || Object.keys(snap.val().players).length === 0)) {
+                        await remove(ref(db, 'rooms/' + roomCode));
+                    }
+                }
+            }
+            
+            roomCode = null;
+            isHost = false;
+            roomRef = null;
+            roomListener = null;
+            mpGameState = null;
+            gameLoopInterval = null;
+        };
+
+        // ==================== GAME OVER ====================
+        function gameOver(title, msg) {
+            document.getElementById('goTitle').textContent = title;
+            document.getElementById('goMessage').textContent = msg;
+            document.getElementById('gameOverScreen').classList.add('active');
+        }
+
+        window.closeGameOver = () => {
+            document.getElementById('gameOverScreen').classList.remove('active');
+            showScreen('menuScreen');
+            stopSinglePlayer();
+            leaveRoom();
+        };
+
+        // ==================== INPUT ====================
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            let dir = null;
+            
+            if (key === 'arrowup' || key === 'w') dir = 'up';
+            else if (key === 'arrowdown' || key === 's') dir = 'down';
+            else if (key === 'arrowleft' || key === 'a') dir = 'left';
+            else if (key === 'arrowright' || key === 'd') dir = 'right';
+            
+            if (!dir) return;
+            e.preventDefault();
+            
+            if (currentScreen === 'singlePlayerScreen') spSetDir(dir);
+            else if (currentScreen === 'multiplayerGame') mpSetDir(dir);
         });
 
-        document.getElementById('createBtn').addEventListener('click', async () => {
-            const name = document.getElementById('playerName').value.trim();
-            if (!name) return alert('Enter a name!');
-            sessionStorage.setItem('playerName', name);
-            sessionStorage.setItem('birdColor', selectedColor);
-            const code = genCode();
-            await createRoom(code);
-            sessionStorage.setItem('roomCode', code);
-            sessionStorage.setItem('isHost', 'true');
-            document.getElementById('createInfo').textContent = 'Room: ' + code;
-            setTimeout(() => location.href = 'lobby.html', 800);
-        });
-
-        document.getElementById('joinBtn').addEventListener('click', async () => {
-            const name = document.getElementById('playerName').value.trim();
-            const code = document.getElementById('joinCode').value.trim().toUpperCase();
-            if (!name || code.length !== 4) return alert('Enter name and 4-letter code!');
-            const exists = await checkRoom(code);
-            if (!exists) return alert('Room not found!');
-            sessionStorage.setItem('playerName', name);
-            sessionStorage.setItem('birdColor', selectedColor);
-            sessionStorage.setItem('roomCode', code);
-            sessionStorage.setItem('isHost', 'false');
-            location.href = 'lobby.html';
+        // Prevent arrow keys from scrolling
+        window.addEventListener('keydown', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
         });
     </script>
 </body>
