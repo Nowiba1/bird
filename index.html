@@ -2,125 +2,93 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Snake FTW - Multiplayer</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: none; }
         
         body {
-            background: #0d1117;
+            background: #05080f;
             color: #c9d1d9;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-x: hidden;
+            overflow: hidden;
+            user-select: none;
         }
 
         .screen {
             display: none;
             width: 100%;
-            max-width: 900px;
-            padding: 20px;
+            height: 100vh;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            padding: 12px;
+            position: relative;
         }
 
         .screen.active { display: flex; }
 
         /* Menu */
-        #menuScreen { justify-content: center; gap: 30px; }
+        #menuScreen { justify-content: center; gap: 24px; }
         
         .logo {
-            font-size: 4rem;
+            font-size: clamp(2.5rem, 10vw, 4.5rem);
             font-weight: 900;
-            color: #238636;
-            text-shadow: 0 0 20px rgba(35, 134, 54, 0.5);
-            letter-spacing: 4px;
+            background: linear-gradient(135deg, #3fb950 0%, #58a6ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
             text-align: center;
+            filter: drop-shadow(0 0 20px rgba(88, 166, 255, 0.3));
         }
-        
-        .logo span { color: #58a6ff; }
 
         .menu-buttons {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
-            max-width: 320px;
+            max-width: 300px;
         }
 
         button {
-            background: #238636;
+            background: linear-gradient(135deg, #238636, #2ea043);
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            border-radius: 8px;
+            padding: 16px;
+            font-size: 1rem;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
+            font-weight: 700;
+            transition: transform 0.15s, filter 0.15s;
             width: 100%;
+            letter-spacing: 0.5px;
         }
 
-        button:hover {
-            background: #2ea043;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(35, 134, 54, 0.3);
-        }
-
-        button.secondary {
-            background: #21262d;
-            border: 1px solid #30363d;
-        }
-        
+        button:hover, button:active { transform: scale(1.02); filter: brightness(1.15); }
+        button.secondary { background: #21262d; border: 1px solid #30363d; }
         button.secondary:hover { background: #30363d; }
+        button.danger { background: linear-gradient(135deg, #da3633, #f85149); }
+        button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
-        button.danger {
-            background: #da3633;
-        }
-        
-        button.danger:hover { background: #f85149; }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        /* Inputs */
         input[type="text"] {
             width: 100%;
-            max-width: 320px;
-            padding: 15px;
-            font-size: 1.1rem;
+            max-width: 300px;
+            padding: 14px;
+            font-size: 1rem;
             border: 1px solid #30363d;
-            border-radius: 8px;
+            border-radius: 10px;
             background: #0d1117;
             color: #c9d1d9;
             text-align: center;
             text-transform: uppercase;
         }
-        
-        input[type="text"]::placeholder { color: #484f58; text-transform: none; }
-        input[type="text"]:focus { outline: none; border-color: #58a6ff; }
+        input:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.15); }
 
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 100%;
-            max-width: 320px;
-            align-items: center;
-        }
-
-        .or-divider {
-            color: #484f58;
-            font-weight: 600;
-            margin: 10px 0;
-        }
+        .input-group { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; align-items: center; }
+        .or-divider { color: #484f58; font-weight: 700; font-size: 0.85rem; margin: 4px 0; }
 
         /* Game Header */
         .game-header {
@@ -128,202 +96,146 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-            gap: 10px;
+            margin-bottom: 8px;
+            padding: 0 4px;
         }
 
-        .back-btn {
-            width: auto;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-
-        .score {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #58a6ff;
-        }
+        .back-btn { width: auto; padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; }
+        .score { font-size: 1.1rem; font-weight: 800; color: #58a6ff; }
 
         /* Canvas */
         canvas {
-            border: 2px solid #30363d;
-            border-radius: 8px;
-            background: #010409;
-            max-width: 100%;
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            background: #0a0e15;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 60px rgba(0,0,0,0.5);
+            max-width: 95vw;
+            max-height: calc(100vh - 160px);
+            touch-action: none;
         }
 
         /* Lobby */
         .room-code-display {
-            background: #161b22;
+            background: rgba(22, 27, 34, 0.8);
             border: 1px solid #30363d;
-            padding: 20px 40px;
+            padding: 16px 32px;
             border-radius: 12px;
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: 8px;
+            font-size: clamp(1.5rem, 6vw, 2.2rem);
+            font-weight: 800;
+            letter-spacing: 6px;
             color: #58a6ff;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .room-code-display button {
-            width: auto;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-        }
-
-        .players-list {
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .player-item {
-            background: #161b22;
-            border: 1px solid #30363d;
-            padding: 12px 20px;
-            border-radius: 8px;
+            margin: 12px 0;
             display: flex;
             align-items: center;
             gap: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        .room-code-display button { width: auto; padding: 6px 12px; font-size: 0.8rem; }
+
+        .players-list {
+            width: 100%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+            overflow-y: auto;
+            max-height: 35vh;
         }
 
-        .player-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            flex-shrink: 0;
+        .player-item {
+            background: rgba(22, 27, 34, 0.6);
+            border: 1px solid #21262d;
+            padding: 10px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
         }
 
-        .player-name { flex: 1; font-weight: 600; }
-        .player-badge {
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 4px;
-            background: #238636;
-            color: white;
-        }
+        .player-color { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+        .player-name { flex: 1; font-weight: 600; font-size: 0.95rem; }
+        .player-badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 4px; background: #238636; color: white; font-weight: 700; }
 
         .mp-scores {
             display: flex;
-            gap: 15px;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
         }
-        
         .mp-score-item {
-            background: #161b22;
-            border: 1px solid #30363d;
-            padding: 5px 12px;
+            background: rgba(22, 27, 34, 0.8);
+            border: 1px solid #21262d;
+            padding: 4px 10px;
             border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 700;
+            backdrop-filter: blur(10px);
         }
 
-        /* Mobile Controls */
-        .mobile-controls {
-            display: none;
-            margin-top: 20px;
-            grid-template-columns: repeat(3, 70px);
-            grid-template-rows: repeat(3, 70px);
-            gap: 5px;
-        }
-        
-        @media (max-width: 768px) {
-            .mobile-controls { display: grid; }
-            .logo { font-size: 2.5rem; }
+        /* Touch hint */
+        .touch-hint {
+            position: absolute;
+            bottom: 20px;
+            color: #484f58;
+            font-size: 0.75rem;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0.7;
         }
 
-        .dpad-btn {
-            width: 70px;
-            height: 70px;
-            background: #21262d;
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            user-select: none;
-            touch-action: manipulation;
-        }
-        
-        .dpad-btn:active { background: #30363d; }
-        .dpad-up { grid-column: 2; grid-row: 1; }
-        .dpad-left { grid-column: 1; grid-row: 2; }
-        .dpad-right { grid-column: 3; grid-row: 2; }
-        .dpad-down { grid-column: 2; grid-row: 3; }
-
-        /* Game Over Overlay */
+        /* Overlay */
         .overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(5, 8, 15, 0.92);
             z-index: 100;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(8px);
         }
         
         .game-over-box {
-            background: #161b22;
+            background: linear-gradient(180deg, #161b22, #0d1117);
             border: 1px solid #30363d;
-            padding: 40px;
+            padding: 32px 24px;
             border-radius: 16px;
             text-align: center;
-            max-width: 400px;
+            max-width: 360px;
             width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
         
-        .game-over-box h2 {
-            font-size: 2rem;
-            margin-bottom: 10px;
-            color: #f85149;
-        }
+        .game-over-box h2 { font-size: 1.8rem; margin-bottom: 8px; color: #f85149; }
+        .game-over-box p { margin-bottom: 20px; color: #8b949e; line-height: 1.5; font-size: 0.95rem; }
+        .winner-text { color: #58a6ff !important; font-weight: 800; }
+
+        h2 { margin-bottom: 8px; color: #e6edf3; font-size: 1.3rem; }
+        .status-waiting { color: #d29922; font-weight: 700; font-size: 0.9rem; }
+        .status-playing { color: #3fb950; font-weight: 700; font-size: 0.9rem; }
+        .status-ended { color: #f85149; font-weight: 700; font-size: 0.9rem; }
+
+        .instructions { color: #484f58; font-size: 0.8rem; margin-top: 16px; text-align: center; line-height: 1.5; }
         
-        .game-over-box p {
-            margin-bottom: 25px;
-            color: #8b949e;
-            line-height: 1.5;
+        @media (max-height: 700px) {
+            .logo { margin-bottom: 8px; }
+            .menu-buttons { gap: 8px; }
+            button { padding: 12px; }
         }
-
-        .winner-text { color: #58a6ff !important; font-weight: 700; }
-
-        /* Instructions */
-        .instructions {
-            color: #484f58;
-            font-size: 0.85rem;
-            margin-top: 20px;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-        h2 { margin-bottom: 10px; color: #e6edf3; }
-        
-        .status-waiting { color: #d29922; }
-        .status-playing { color: #3fb950; }
-        .status-ended { color: #f85149; }
     </style>
 </head>
 <body>
 
     <!-- MENU -->
     <div id="menuScreen" class="screen active">
-        <div class="logo">SNAKE <span>FTW</span></div>
+        <div class="logo">SNAKE FTW</div>
         <div class="menu-buttons">
             <button onclick="showScreen('singlePlayerScreen'); startSinglePlayer()">🎮 Single Player</button>
             <button class="secondary" onclick="showScreen('multiplayerMenu')">🌐 Multiplayer</button>
         </div>
         <div class="instructions">
-            Use Arrow Keys or WASD to move<br>
-            Eat food to grow. Don't hit walls or yourself!<br>
-            In multiplayer, last snake alive wins.
+            Arrow Keys / WASD to move on PC<br>
+            Tap anywhere on screen to steer on mobile
         </div>
     </div>
 
@@ -331,41 +243,36 @@
     <div id="singlePlayerScreen" class="screen">
         <div class="game-header">
             <button class="back-btn secondary" onclick="showScreen('menuScreen'); stopSinglePlayer()">← Back</button>
-            <div class="score">Score: <span id="spScore">0</span> | High: <span id="spHigh">0</span></div>
+            <div class="score">Score: <span id="spScore">0</span> | Best: <span id="spHigh">0</span></div>
         </div>
-        <canvas id="spCanvas" width="625" height="625"></canvas>
-        <div class="mobile-controls" id="spMobile">
-            <div class="dpad-btn dpad-up" ontouchstart="spSetDir('up')" onclick="spSetDir('up')">▲</div>
-            <div class="dpad-btn dpad-left" ontouchstart="spSetDir('left')" onclick="spSetDir('left')">◀</div>
-            <div class="dpad-btn dpad-right" ontouchstart="spSetDir('right')" onclick="spSetDir('right')">▶</div>
-            <div class="dpad-btn dpad-down" ontouchstart="spSetDir('down')" onclick="spSetDir('down')">▼</div>
-        </div>
+        <canvas id="spCanvas"></canvas>
+        <div class="touch-hint">Tap left/right/up/down of center to steer</div>
     </div>
 
     <!-- MULTIPLAYER MENU -->
     <div id="multiplayerMenu" class="screen">
         <button class="back-btn secondary" onclick="showScreen('menuScreen')">← Back</button>
-        <h2>Multiplayer</h2>
-        <div class="input-group" style="margin-top: 30px;">
+        <h2 style="margin-top:20px">Multiplayer</h2>
+        <div class="input-group" style="margin-top: 24px;">
             <input type="text" id="playerName" placeholder="Your Name" maxlength="12">
             <button onclick="createRoom()">➕ Create Room</button>
             <div class="or-divider">— OR —</div>
             <input type="text" id="roomCodeInput" placeholder="Room Code (AB12)" maxlength="4">
             <button class="secondary" onclick="joinRoom()">🔗 Join Room</button>
         </div>
-        <div class="instructions" id="mpError" style="color: #f85149;"></div>
+        <div class="instructions" id="mpError" style="color: #f85149; min-height: 20px;"></div>
     </div>
 
     <!-- LOBBY -->
     <div id="lobbyScreen" class="screen">
-        <h2>Game Lobby</h2>
+        <h2 style="margin-top:10px">Game Lobby</h2>
         <div class="room-code-display">
             <span id="displayRoomCode">----</span>
             <button class="secondary" onclick="copyRoomCode()">Copy</button>
         </div>
-        <div style="margin-bottom: 10px;" id="lobbyStatus" class="status-waiting">Waiting for players...</div>
+        <div id="lobbyStatus" class="status-waiting">Waiting for players...</div>
         <div class="players-list" id="playersList"></div>
-        <div class="menu-buttons" style="margin-top: 20px;">
+        <div class="menu-buttons" style="margin-top: 12px;">
             <button id="startGameBtn" onclick="startMultiplayerGame()" style="display:none">▶ Start Game</button>
             <button class="danger" onclick="leaveRoom()">Leave Room</button>
         </div>
@@ -377,13 +284,8 @@
             <button class="back-btn danger" onclick="leaveRoom(); showScreen('menuScreen')">✕ Quit</button>
             <div class="mp-scores" id="mpScores"></div>
         </div>
-        <canvas id="mpCanvas" width="625" height="625"></canvas>
-        <div class="mobile-controls" id="mpMobile">
-            <div class="dpad-btn dpad-up" ontouchstart="mpSetDir('up')" onclick="mpSetDir('up')">▲</div>
-            <div class="dpad-btn dpad-left" ontouchstart="mpSetDir('left')" onclick="mpSetDir('left')">◀</div>
-            <div class="dpad-btn dpad-right" ontouchstart="mpSetDir('right')" onclick="mpSetDir('right')">▶</div>
-            <div class="dpad-btn dpad-down" ontouchstart="mpSetDir('down')" onclick="mpSetDir('down')">▼</div>
-        </div>
+        <canvas id="mpCanvas"></canvas>
+        <div class="touch-hint">Tap left/right/up/down of center to steer</div>
     </div>
 
     <!-- GAME OVER -->
@@ -414,12 +316,13 @@
         const db = getDatabase(app);
 
         // ==================== CONSTANTS ====================
-        const GRID_SIZE = 25;
-        const CELL_SIZE = 25;
-        const CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
-        const GAME_SPEED = 120;
+        const GRID_SIZE = 60;
+        let CELL_SIZE = 14;
+        let CANVAS_PX = GRID_SIZE * CELL_SIZE;
+        
+        const TICK_RATE = 85;
         const COLORS = ['#3fb950', '#58a6ff', '#f0883e', '#f778ba', '#a371f7', '#56d364'];
-
+        
         // ==================== STATE ====================
         let currentScreen = 'menuScreen';
         let myPlayerId = localStorage.getItem('snake_player_id') || 'p_' + Math.random().toString(36).substr(2, 9);
@@ -429,12 +332,38 @@
         let isHost = false;
         let roomRef = null;
         let roomListener = null;
-        let gameLoopInterval = null;
+        let hostTickInterval = null;
         let mpGameState = null;
+        let lastRenderTime = 0;
+        let spHighScore = parseInt(localStorage.getItem('snake_high') || '0');
 
         // Single Player
         let spGame = null;
-        let spHighScore = parseInt(localStorage.getItem('snake_high') || '0');
+        let spReqId = null;
+        let spLastTick = 0;
+
+        // ==================== CANVAS SIZING ====================
+        function resizeCanvas(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const maxW = Math.min(window.innerWidth - 24, 800);
+            const maxH = window.innerHeight - 140;
+            const size = Math.min(maxW, maxH);
+            
+            CELL_SIZE = Math.max(6, Math.floor(size / GRID_SIZE));
+            CANVAS_PX = GRID_SIZE * CELL_SIZE;
+            
+            canvas.width = CANVAS_PX;
+            canvas.height = CANVAS_PX;
+            canvas.style.width = CANVAS_PX + 'px';
+            canvas.style.height = CANVAS_PX + 'px';
+        }
+
+        window.addEventListener('resize', () => {
+            if (currentScreen === 'singlePlayerScreen') resizeCanvas('spCanvas');
+            if (currentScreen === 'multiplayerGame') resizeCanvas('mpCanvas');
+        });
 
         // ==================== UTILS ====================
         window.showScreen = (id) => {
@@ -462,139 +391,244 @@
             return a && b && a.x === b.x && a.y === b.y;
         }
 
-        // ==================== RENDERING ====================
+        // ==================== DRAWING ====================
+        function roundRect(ctx, x, y, w, h, r) {
+            const rr = Math.min(r, w/2, h/2);
+            ctx.beginPath();
+            ctx.moveTo(x + rr, y);
+            ctx.lineTo(x + w - rr, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+            ctx.lineTo(x + w, y + h - rr);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+            ctx.lineTo(x + rr, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+            ctx.lineTo(x, y + rr);
+            ctx.quadraticCurveTo(x, y, x + rr, y);
+            ctx.closePath();
+        }
+
         function drawGrid(ctx) {
-            ctx.fillStyle = '#010409';
-            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            ctx.fillStyle = '#080c14';
+            ctx.fillRect(0, 0, CANVAS_PX, CANVAS_PX);
             
-            ctx.strokeStyle = '#161b22';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= GRID_SIZE; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * CELL_SIZE, 0);
-                ctx.lineTo(i * CELL_SIZE, CANVAS_SIZE);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(0, i * CELL_SIZE);
-                ctx.lineTo(CANVAS_SIZE, i * CELL_SIZE);
-                ctx.stroke();
+            // Subtle dot grid
+            ctx.fillStyle = '#111820';
+            const step = 2;
+            const dot = Math.max(1, CELL_SIZE * 0.06);
+            for (let x = 0; x <= GRID_SIZE; x += step) {
+                for (let y = 0; y <= GRID_SIZE; y += step) {
+                    ctx.beginPath();
+                    ctx.arc(x * CELL_SIZE, y * CELL_SIZE, dot, 0, Math.PI*2);
+                    ctx.fill();
+                }
             }
         }
 
-        function drawSnake(ctx, snake, color, isSelf) {
-            snake.forEach((seg, i) => {
-                const x = seg.x * CELL_SIZE;
-                const y = seg.y * CELL_SIZE;
-                
-                if (i === 0) {
-                    ctx.fillStyle = isSelf ? '#fff' : color;
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = isSelf ? 15 : 8;
-                } else {
-                    ctx.fillStyle = color;
-                    ctx.shadowBlur = 0;
-                    ctx.globalAlpha = 1 - (i / snake.length) * 0.6;
-                }
-                
-                ctx.fillRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
-                ctx.globalAlpha = 1;
-                ctx.shadowBlur = 0;
-            });
-        }
-
-        function drawFood(ctx, food) {
-            if (!food) return;
-            const x = food.x * CELL_SIZE + CELL_SIZE / 2;
-            const y = food.y * CELL_SIZE + CELL_SIZE / 2;
+        function drawSnakeSegment(ctx, seg, color, isHead, direction) {
+            const pad = Math.max(1, CELL_SIZE * 0.08);
+            const x = seg.x * CELL_SIZE + pad;
+            const y = seg.y * CELL_SIZE + pad;
+            const w = CELL_SIZE - pad * 2;
+            const r = w * 0.25;
             
-            ctx.fillStyle = '#f85149';
-            ctx.shadowColor = '#f85149';
-            ctx.shadowBlur = 15;
-            ctx.beginPath();
-            ctx.arc(x, y, CELL_SIZE / 2 - 4, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            if (isHead) {
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 12;
+            }
+            roundRect(ctx, x, y, w, w, r);
             ctx.fill();
             ctx.shadowBlur = 0;
+            
+            // Eyes on head
+            if (isHead && CELL_SIZE >= 10) {
+                const eyeSize = Math.max(2, CELL_SIZE * 0.12);
+                const offset = CELL_SIZE * 0.22;
+                let ex1, ey1, ex2, ey2;
+                
+                if (direction === 'left' || direction === 'right') {
+                    const eyeX = direction === 'right' ? (seg.x + 1) * CELL_SIZE - offset - eyeSize : seg.x * CELL_SIZE + offset;
+                    ex1 = eyeX; ey1 = seg.y * CELL_SIZE + offset;
+                    ex2 = eyeX; ey2 = seg.y * CELL_SIZE + CELL_SIZE - offset - eyeSize;
+                } else {
+                    const eyeY = direction === 'down' ? (seg.y + 1) * CELL_SIZE - offset - eyeSize : seg.y * CELL_SIZE + offset;
+                    ex1 = seg.x * CELL_SIZE + offset; ey1 = eyeY;
+                    ex2 = seg.x * CELL_SIZE + CELL_SIZE - offset - eyeSize; ey2 = eyeY;
+                }
+                
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(ex1 + eyeSize/2, ey1 + eyeSize/2, eyeSize, 0, Math.PI*2);
+                ctx.arc(ex2 + eyeSize/2, ey2 + eyeSize/2, eyeSize, 0, Math.PI*2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(ex1 + eyeSize/2, ey1 + eyeSize/2, eyeSize*0.5, 0, Math.PI*2);
+                ctx.arc(ex2 + eyeSize/2, ey2 + eyeSize/2, eyeSize*0.5, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        function drawFood(ctx, food, time) {
+            const cx = food.x * CELL_SIZE + CELL_SIZE / 2;
+            const cy = food.y * CELL_SIZE + CELL_SIZE / 2;
+            const baseR = CELL_SIZE / 2 - 2;
+            const pulse = Math.sin(time / 250) * 0.25 + 0.75;
+            
+            // Glow
+            ctx.shadowColor = '#ff6b6b';
+            ctx.shadowBlur = 16 * pulse;
+            
+            // Body
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Shine
+            ctx.fillStyle = 'rgba(255,255,255,0.35)';
+            ctx.beginPath();
+            ctx.arc(cx - baseR*0.3, cy - baseR*0.3, baseR*0.35, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Stem
+            if (CELL_SIZE > 8) {
+                ctx.strokeStyle = '#40c057';
+                ctx.lineWidth = Math.max(1, CELL_SIZE * 0.1);
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - baseR + 1);
+                ctx.quadraticCurveTo(cx + 2, cy - baseR - 4, cx + 4, cy - baseR - 3);
+                ctx.stroke();
+            }
+            
+            ctx.shadowBlur = 0;
+        }
+
+        // ==================== TOUCH CONTROLS ====================
+        function attachTouch(canvasId, callback) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                const cx = rect.width / 2;
+                const cy = rect.height / 2;
+                const dx = x - cx;
+                const dy = y - cy;
+                
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    callback(dx > 0 ? 'right' : 'left');
+                } else {
+                    callback(dy > 0 ? 'down' : 'up');
+                }
+            }, { passive: false });
         }
 
         // ==================== SINGLE PLAYER ====================
         window.startSinglePlayer = () => {
+            resizeCanvas('spCanvas');
             const canvas = document.getElementById('spCanvas');
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { alpha: false });
             document.getElementById('spHigh').textContent = spHighScore;
             
             spGame = {
-                snake: [{x: 5, y: 12}, {x: 4, y: 12}, {x: 3, y: 12}],
+                snake: [{x: 8, y: 30}, {x: 7, y: 30}, {x: 6, y: 30}],
                 direction: 'right',
                 nextDirection: 'right',
                 food: randomPos(),
                 score: 0,
                 alive: true
             };
-
-            const loop = () => {
+            spLastTick = performance.now();
+            
+            attachTouch('spCanvas', (dir) => {
                 if (!spGame || !spGame.alive) return;
+                if (getOpposite(dir) !== spGame.direction) spGame.nextDirection = dir;
+            });
+            
+            const loop = (time) => {
+                if (!spGame) return;
                 
-                spGame.direction = spGame.nextDirection;
-                const head = { ...spGame.snake[0] };
-                
-                if (spGame.direction === 'up') head.y--;
-                else if (spGame.direction === 'down') head.y++;
-                else if (spGame.direction === 'left') head.x--;
-                else if (spGame.direction === 'right') head.x++;
-                
-                // Wall collision
-                if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
-                    spGame.alive = false;
-                    gameOver('Game Over', `Score: ${spGame.score}`);
-                    if (spGame.score > spHighScore) {
-                        spHighScore = spGame.score;
-                        localStorage.setItem('snake_high', spHighScore);
-                    }
-                    return;
+                // Fixed timestep update
+                while (time - spLastTick >= TICK_RATE) {
+                    if (spGame.alive) updateSinglePlayer();
+                    spLastTick += TICK_RATE;
                 }
                 
-                // Self collision
-                if (spGame.snake.some(s => posEquals(s, head))) {
-                    spGame.alive = false;
-                    gameOver('Game Over', `Score: ${spGame.score}`);
-                    if (spGame.score > spHighScore) {
-                        spHighScore = spGame.score;
-                        localStorage.setItem('snake_high', spHighScore);
-                    }
-                    return;
-                }
-                
-                spGame.snake.unshift(head);
-                
-                if (posEquals(head, spGame.food)) {
-                    spGame.score += 10;
-                    document.getElementById('spScore').textContent = spGame.score;
-                    let newFood = randomPos();
-                    while (spGame.snake.some(s => posEquals(s, newFood))) newFood = randomPos();
-                    spGame.food = newFood;
-                } else {
-                    spGame.snake.pop();
-                }
-                
-                drawGrid(ctx);
-                drawFood(ctx, spGame.food);
-                drawSnake(ctx, spGame.snake, '#3fb950', true);
+                // Render at 60fps
+                if (spGame) renderSinglePlayer(ctx, time);
+                spReqId = requestAnimationFrame(loop);
             };
             
-            spGame.interval = setInterval(loop, GAME_SPEED);
-            drawGrid(ctx);
-            drawFood(ctx, spGame.food);
-            drawSnake(ctx, spGame.snake, '#3fb950', true);
+            spReqId = requestAnimationFrame(loop);
         };
+
+        function updateSinglePlayer() {
+            const g = spGame;
+            g.direction = g.nextDirection;
+            const head = { x: g.snake[0].x, y: g.snake[0].y };
+            
+            if (g.direction === 'up') head.y--;
+            else if (g.direction === 'down') head.y++;
+            else if (g.direction === 'left') head.x--;
+            else if (g.direction === 'right') head.x++;
+            
+            // Wall wrap or die? Let's die for classic feel
+            if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+                g.alive = false;
+                if (g.score > spHighScore) {
+                    spHighScore = g.score;
+                    localStorage.setItem('snake_high', spHighScore);
+                }
+                gameOver('Game Over', `Score: ${g.score}`);
+                return;
+            }
+            
+            if (g.snake.some(s => posEquals(s, head))) {
+                g.alive = false;
+                if (g.score > spHighScore) {
+                    spHighScore = g.score;
+                    localStorage.setItem('snake_high', spHighScore);
+                }
+                gameOver('Game Over', `Score: ${g.score}`);
+                return;
+            }
+            
+            g.snake.unshift(head);
+            if (posEquals(head, g.food)) {
+                g.score += 10;
+                document.getElementById('spScore').textContent = g.score;
+                let nf = randomPos();
+                let guard = 0;
+                while (g.snake.some(s => posEquals(s, nf)) && guard++ < 200) nf = randomPos();
+                g.food = nf;
+            } else {
+                g.snake.pop();
+            }
+        }
+
+        function renderSinglePlayer(ctx, time) {
+            if (!spGame) return;
+            drawGrid(ctx);
+            drawFood(ctx, spGame.food, time);
+            spGame.snake.forEach((seg, i) => {
+                const isHead = i === 0;
+                const alpha = 1 - (i / spGame.snake.length) * 0.5;
+                ctx.globalAlpha = alpha;
+                drawSnakeSegment(ctx, seg, isHead ? '#4ade80' : '#22c55e', isHead, spGame.direction);
+            });
+            ctx.globalAlpha = 1;
+        }
 
         window.stopSinglePlayer = () => {
-            if (spGame && spGame.interval) clearInterval(spGame.interval);
+            if (spReqId) cancelAnimationFrame(spReqId);
             spGame = null;
-        };
-
-        window.spSetDir = (dir) => {
-            if (!spGame || !spGame.alive) return;
-            if (getOpposite(dir) !== spGame.direction) spGame.nextDirection = dir;
+            spReqId = null;
         };
 
         // ==================== MULTIPLAYER ====================
@@ -603,7 +637,7 @@
             roomCode = generateRoomCode();
             isHost = true;
             
-            const roomData = {
+            await set(ref(db, 'rooms/' + roomCode), {
                 status: 'waiting',
                 host: myPlayerId,
                 createdAt: Date.now(),
@@ -618,9 +652,7 @@
                         ready: true
                     }
                 }
-            };
-            
-            await set(ref(db, 'rooms/' + roomCode), roomData);
+            });
             enterLobby();
         };
 
@@ -629,42 +661,29 @@
             const name = document.getElementById('playerName').value.trim() || 'Player';
             const errEl = document.getElementById('mpError');
             
-            if (code.length !== 4) {
-                errEl.textContent = 'Enter a valid 4-character room code';
-                return;
-            }
+            if (code.length !== 4) { errEl.textContent = 'Enter a valid 4-character code'; return; }
             
-            const snapshot = await get(ref(db, 'rooms/' + code));
-            if (!snapshot.exists()) {
-                errEl.textContent = 'Room not found';
-                return;
-            }
+            const snap = await get(ref(db, 'rooms/' + code));
+            if (!snap.exists()) { errEl.textContent = 'Room not found'; return; }
             
-            const room = snapshot.val();
-            if (room.status !== 'waiting') {
-                errEl.textContent = 'Game already in progress';
-                return;
-            }
+            const room = snap.val();
+            if (room.status !== 'waiting') { errEl.textContent = 'Game already in progress'; return; }
             
-            const playerCount = Object.keys(room.players || {}).length;
-            if (playerCount >= 6) {
-                errEl.textContent = 'Room is full (max 6)';
-                return;
-            }
+            const count = Object.keys(room.players || {}).length;
+            if (count >= 6) { errEl.textContent = 'Room is full'; return; }
             
             roomCode = code;
             isHost = false;
             
             await update(ref(db, 'rooms/' + roomCode + '/players/' + myPlayerId), {
                 name: name.substring(0, 12),
-                color: COLORS[playerCount % COLORS.length],
+                color: COLORS[count % COLORS.length],
                 snake: [],
                 direction: 'right',
                 score: 0,
                 alive: false,
                 ready: true
             });
-            
             enterLobby();
         };
 
@@ -673,23 +692,16 @@
             document.getElementById('displayRoomCode').textContent = roomCode;
             
             roomRef = ref(db, 'rooms/' + roomCode);
-            roomListener = onValue(roomRef, (snapshot) => {
-                if (!snapshot.exists()) {
+            roomListener = onValue(roomRef, (snap) => {
+                if (!snap.exists()) {
                     leaveRoom();
-                    gameOver('Room Closed', 'The host has left the room.');
+                    gameOver('Room Closed', 'The host left.');
                     return;
                 }
-                
-                const room = snapshot.val();
+                const room = snap.val();
                 renderLobby(room);
-                
-                if (room.status === 'playing' && currentScreen === 'lobbyScreen') {
-                    startMpGameplay(room);
-                }
-                
-                if (room.status === 'ended' && currentScreen === 'multiplayerGame') {
-                    endMpGame(room);
-                }
+                if (room.status === 'playing' && currentScreen === 'lobbyScreen') startMpGameplay(room);
+                if (room.status === 'ended' && currentScreen === 'multiplayerGame') endMpGame(room);
             });
         }
 
@@ -699,7 +711,7 @@
             const count = Object.keys(players).length;
             
             document.getElementById('lobbyStatus').textContent = 
-                room.status === 'waiting' ? `Waiting for players... (${count} joined)` :
+                room.status === 'waiting' ? `Waiting... (${count}/6)` :
                 room.status === 'playing' ? 'Game in progress!' : 'Game ended';
             document.getElementById('lobbyStatus').className = 
                 room.status === 'waiting' ? 'status-waiting' :
@@ -717,12 +729,8 @@
                 list.appendChild(div);
             });
             
-            const startBtn = document.getElementById('startGameBtn');
-            if (isHost && room.status === 'waiting' && count >= 1) {
-                startBtn.style.display = 'block';
-            } else {
-                startBtn.style.display = 'none';
-            }
+            const btn = document.getElementById('startGameBtn');
+            btn.style.display = (isHost && room.status === 'waiting' && count >= 1) ? 'block' : 'none';
         }
 
         window.copyRoomCode = () => {
@@ -736,21 +744,19 @@
 
         window.startMultiplayerGame = async () => {
             if (!isHost) return;
-            
-            const snapshot = await get(ref(db, 'rooms/' + roomCode));
-            const room = snapshot.val();
+            const snap = await get(ref(db, 'rooms/' + roomCode));
+            const room = snap.val();
             const pids = Object.keys(room.players);
             
-            // Initialize snake positions
+            // Spread starts across 60x60 grid
             const starts = [
-                [{x: 5, y: 5}, {x: 4, y: 5}, {x: 3, y: 5}],
-                [{x: 19, y: 19}, {x: 20, y: 19}, {x: 21, y: 19}],
-                [{x: 19, y: 5}, {x: 20, y: 5}, {x: 21, y: 5}],
-                [{x: 5, y: 19}, {x: 4, y: 19}, {x: 3, y: 19}],
-                [{x: 12, y: 2}, {x: 12, y: 3}, {x: 12, y: 4}],
-                [{x: 12, y: 22}, {x: 12, y: 21}, {x: 12, y: 20}]
+                [{x: 8, y: 8}, {x: 7, y: 8}, {x: 6, y: 8}],
+                [{x: 52, y: 52}, {x: 53, y: 52}, {x: 54, y: 52}],
+                [{x: 52, y: 8}, {x: 53, y: 8}, {x: 54, y: 8}],
+                [{x: 8, y: 52}, {x: 7, y: 52}, {x: 6, y: 52}],
+                [{x: 30, y: 5}, {x: 30, y: 6}, {x: 30, y: 7}],
+                [{x: 30, y: 55}, {x: 30, y: 54}, {x: 30, y: 53}]
             ];
-            
             const dirs = ['right', 'left', 'left', 'right', 'down', 'up'];
             const updates = {};
             
@@ -764,31 +770,48 @@
             updates.food = randomPos();
             updates.status = 'playing';
             updates.winner = null;
-            
             await update(ref(db, 'rooms/' + roomCode), updates);
         };
 
         function startMpGameplay(initialRoom) {
+            resizeCanvas('mpCanvas');
             showScreen('multiplayerGame');
             mpGameState = initialRoom;
             
+            attachTouch('mpCanvas', (dir) => {
+                if (!mpGameState || mpGameState.status !== 'playing') return;
+                const p = mpGameState.players[myPlayerId];
+                if (!p || !p.alive) return;
+                if (getOpposite(dir) === p.direction) return;
+                update(ref(db, `rooms/${roomCode}/players/${myPlayerId}`), { direction: dir });
+            });
+            
             if (isHost) {
-                gameLoopInterval = setInterval(hostGameLoop, GAME_SPEED);
+                hostTickInterval = setInterval(hostGameLoop, TICK_RATE);
             }
             
-            // Listen for state updates
             off(roomRef);
             roomListener = onValue(roomRef, (snap) => {
                 if (!snap.exists()) return;
                 mpGameState = snap.val();
-                renderMpGame();
-                updateMpScores();
             });
+            
+            let mpReqId;
+            const renderLoop = (time) => {
+                if (currentScreen !== 'multiplayerGame') return;
+                const canvas = document.getElementById('mpCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d', { alpha: false });
+                    renderMpGame(ctx, time);
+                    updateMpScores();
+                }
+                mpReqId = requestAnimationFrame(renderLoop);
+            };
+            mpReqId = requestAnimationFrame(renderLoop);
         }
 
         async function hostGameLoop() {
             if (!mpGameState || mpGameState.status !== 'playing') return;
-            
             const players = mpGameState.players;
             const pids = Object.keys(players);
             let aliveCount = 0;
@@ -798,11 +821,10 @@
             pids.forEach(pid => {
                 const p = players[pid];
                 if (!p.alive) return;
-                
                 aliveCount++;
                 lastAlive = pid;
                 
-                const head = { ...p.snake[0] };
+                const head = { x: p.snake[0].x, y: p.snake[0].y };
                 if (p.direction === 'up') head.y--;
                 else if (p.direction === 'down') head.y++;
                 else if (p.direction === 'left') head.x--;
@@ -820,45 +842,38 @@
                     return;
                 }
                 
-                // Other snake collision
-                let hitOther = false;
+                // Other snakes
+                let hit = false;
                 pids.forEach(opid => {
                     if (opid === pid) return;
                     const op = players[opid];
-                    if (op.snake.some(s => posEquals(s, head))) {
-                        hitOther = true;
-                    }
+                    if (op.snake && op.snake.some(s => posEquals(s, head))) hit = true;
                 });
-                if (hitOther) {
+                if (hit) {
                     updates[`players/${pid}/alive`] = false;
                     return;
                 }
                 
                 const newSnake = [head, ...p.snake];
-                
-                // Food
                 if (posEquals(head, mpGameState.food)) {
                     updates[`players/${pid}/score`] = (p.score || 0) + 10;
-                    let newFood = randomPos();
-                    let occupied = true;
-                    let attempts = 0;
-                    while (occupied && attempts < 100) {
-                        occupied = false;
+                    let nf = randomPos();
+                    let guard = 0;
+                    let occ = true;
+                    while (occ && guard++ < 300) {
+                        occ = false;
                         pids.forEach(opid => {
-                            if (players[opid].snake.some(s => posEquals(s, newFood))) occupied = true;
+                            if (players[opid].snake && players[opid].snake.some(s => posEquals(s, nf))) occ = true;
                         });
-                        if (occupied) newFood = randomPos();
-                        attempts++;
+                        if (occ) nf = randomPos();
                     }
-                    updates.food = newFood;
+                    updates.food = nf;
                 } else {
                     newSnake.pop();
                 }
-                
                 updates[`players/${pid}/snake`] = newSnake;
             });
             
-            // Check win condition
             if (aliveCount <= 1 && pids.length > 1) {
                 updates.status = 'ended';
                 updates.winner = lastAlive;
@@ -870,26 +885,28 @@
             await update(ref(db, 'rooms/' + roomCode), updates);
         }
 
-        function renderMpGame() {
-            const canvas = document.getElementById('mpCanvas');
-            const ctx = canvas.getContext('2d');
-            
+        function renderMpGame(ctx, time) {
+            if (!mpGameState) return;
             drawGrid(ctx);
-            if (mpGameState.food) drawFood(ctx, mpGameState.food);
+            if (mpGameState.food) drawFood(ctx, mpGameState.food, time);
             
-            if (mpGameState.players) {
-                Object.entries(mpGameState.players).forEach(([pid, p]) => {
-                    if (p.snake && p.snake.length > 0) {
-                        drawSnake(ctx, p.snake, p.color, pid === myPlayerId);
-                    }
+            Object.entries(mpGameState.players || {}).forEach(([pid, p]) => {
+                if (!p.snake || p.snake.length === 0) return;
+                p.snake.forEach((seg, i) => {
+                    const isHead = i === 0;
+                    const isSelf = pid === myPlayerId;
+                    const alpha = isHead ? 1 : Math.max(0.3, 1 - (i / p.snake.length) * 0.5);
+                    ctx.globalAlpha = p.alive ? alpha : 0.25;
+                    const color = isHead ? (isSelf ? '#fff' : p.color) : p.color;
+                    drawSnakeSegment(ctx, seg, color, isHead && p.alive, p.direction);
                 });
-            }
+            });
+            ctx.globalAlpha = 1;
         }
 
         function updateMpScores() {
             const container = document.getElementById('mpScores');
             if (!mpGameState || !mpGameState.players) return;
-            
             container.innerHTML = '';
             Object.entries(mpGameState.players).forEach(([pid, p]) => {
                 const div = document.createElement('div');
@@ -902,28 +919,14 @@
 
         function endMpGame(room) {
             const winner = room.winner ? room.players[room.winner] : null;
-            if (winner) {
-                gameOver('Game Over!', `Winner: ${winner.name} with ${winner.score || 0} points!`);
-            } else {
-                gameOver('Game Over!', 'It\'s a draw!');
-            }
-            clearInterval(gameLoopInterval);
+            if (winner) gameOver('Game Over!', `🏆 ${winner.name} wins with ${winner.score || 0} pts!`);
+            else gameOver('Game Over!', "It's a draw!");
+            clearInterval(hostTickInterval);
         }
-
-        window.mpSetDir = async (dir) => {
-            if (!mpGameState || mpGameState.status !== 'playing') return;
-            const p = mpGameState.players[myPlayerId];
-            if (!p || !p.alive) return;
-            if (getOpposite(dir) === p.direction) return;
-            
-            await update(ref(db, `rooms/${roomCode}/players/${myPlayerId}`), {
-                direction: dir
-            });
-        };
 
         window.leaveRoom = async () => {
             if (roomListener) off(roomRef, 'value', roomListener);
-            clearInterval(gameLoopInterval);
+            clearInterval(hostTickInterval);
             
             if (roomCode) {
                 if (isHost) {
@@ -936,13 +939,8 @@
                     }
                 }
             }
-            
-            roomCode = null;
-            isHost = false;
-            roomRef = null;
-            roomListener = null;
-            mpGameState = null;
-            gameLoopInterval = null;
+            roomCode = null; isHost = false; roomRef = null; roomListener = null;
+            mpGameState = null; hostTickInterval = null;
         };
 
         // ==================== GAME OVER ====================
@@ -959,27 +957,24 @@
             leaveRoom();
         };
 
-        // ==================== INPUT ====================
+        // ==================== KEYBOARD ====================
         document.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
             let dir = null;
-            
             if (key === 'arrowup' || key === 'w') dir = 'up';
             else if (key === 'arrowdown' || key === 's') dir = 'down';
             else if (key === 'arrowleft' || key === 'a') dir = 'left';
             else if (key === 'arrowright' || key === 'd') dir = 'right';
-            
             if (!dir) return;
             e.preventDefault();
             
-            if (currentScreen === 'singlePlayerScreen') spSetDir(dir);
-            else if (currentScreen === 'multiplayerGame') mpSetDir(dir);
-        });
-
-        // Prevent arrow keys from scrolling
-        window.addEventListener('keydown', (e) => {
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-                e.preventDefault();
+            if (currentScreen === 'singlePlayerScreen' && spGame && spGame.alive) {
+                if (getOpposite(dir) !== spGame.direction) spGame.nextDirection = dir;
+            } else if (currentScreen === 'multiplayerGame' && mpGameState && mpGameState.status === 'playing') {
+                const p = mpGameState.players[myPlayerId];
+                if (p && p.alive && getOpposite(dir) !== p.direction) {
+                    update(ref(db, `rooms/${roomCode}/players/${myPlayerId}`), { direction: dir });
+                }
             }
         });
     </script>
